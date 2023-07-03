@@ -35,6 +35,17 @@ void init_queue(struct queue_device_data *queue);
 void init_device(struct queue_device *device);
 int create_parallel_queue(struct queue_device_data *queues, struct file *filp);
 struct queue_device_data* get_device_queue(struct queue_device *device, struct file *filp);
+void destroy_queue(struct queue_device_data *data);
+
+static inline void destroy_queue(struct queue_device_data *data)
+{
+    struct queue_node *node, *tmp;
+
+    list_for_each_entry_safe(node, tmp, &data->queue, list) {
+        list_del(&node->list);
+        kfree(node);
+    }
+}
 
 static inline void init_queue(struct queue_device_data *data)
 {
@@ -216,17 +227,13 @@ static int __init queue_init(void)
 
 static void __exit queue_exit(void)
 {
-    struct queue_node *node, *tmp;
+    struct queue_device_data *node, *tmp;
 
-    list_for_each_entry_safe(node, tmp, &device->data.queue, list) {
-        list_del(&node->list);
-        kfree(node);
-        node = NULL;
-        tmp = NULL;
-    }
-
+    destroy_queue(device->data);
+    
     list_for_each_entry_safe(node, tmp, &device->queues.queue, list) {
-        list_del(&node->list);
+        destroy_queue(node); //destroy symbol data queue nodes
+        list_del(&node->queue); //delete queue
         kfree(node);
     }
 
