@@ -108,7 +108,7 @@ static int queue_open(struct inode *inode, struct file *filp)
 static int queue_release(struct inode *inode, struct file *filp)
 {
     if (filp->f_flags & O_EXCL) {
-        mutex_unlock(&queue_device_lock);
+        mutex_unlock(&device->data_lock);
     }
 
     return 0;
